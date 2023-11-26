@@ -8,7 +8,6 @@ import { CustomConfigService } from './config.service';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [`environments/${process.env.NODE_ENV}.env`],
-      //envFilePath: [`environments/local.env`],
     }),
   ],
   providers: [ConfigService, CustomConfigService],
