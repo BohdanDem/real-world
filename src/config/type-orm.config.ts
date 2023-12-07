@@ -15,9 +15,8 @@ export const typeOrmConfig: TypeOrmModuleAsyncOptions = {
       username: customConfigService.db_username,
       password: customConfigService.db_password,
       database: customConfigService.db_database,
-      synchronize: true,
-      migrationsRun: false,
-      entities: [path.join(__dirname, 'database', '**', '*.entity{.ts,.js}')],
+      synchronize: false,
+      entities: [path.join(__dirname + '/../**/*.entity.{js,ts}')],
     };
   },
   inject: [CustomConfigService],

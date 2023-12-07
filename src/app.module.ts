@@ -8,10 +8,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { typeOrmConfig } from './config/type-orm.config';
 import { TagModule } from './tag/tag.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
     TagModule,
+    UserModule,
     TypeOrmModule.forRootAsync(typeOrmConfig),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
