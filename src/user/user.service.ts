@@ -1,12 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { compare } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { Repository } from 'typeorm';
 
 import { JWT_SECRET } from '../config';
 import { UserEntity } from '../database/entities/user.entity';
-import { UserResponseInterface } from '../types/userResponse.interface';
 import { CreateUserDto } from './dto/createUser.dto';
+import { LoginUserDto } from './dto/login.dto';
+import { UserResponseInterface } from './types/userResponse.interface';
 
 @Injectable()
 export class UserService {
@@ -15,9 +17,56 @@ export class UserService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
   async createUser(createUserDTO: CreateUserDto): Promise<UserEntity> {
+    const userByEmail = await this.userRepository.findOne({
+      where: { email: createUserDTO.email },
+    });
+    const userByUserName = await this.userRepository.findOne({
+      where: { userName: createUserDTO.userName },
+    });
+    if (userByEmail || userByUserName) {
+      throw new HttpException(
+        'Email or userName are taken',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
     const newUser = new UserEntity();
     Object.assign(newUser, createUserDTO);
     return await this.userRepository.save(newUser);
+  }
+
+  async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
+    const user = await this.userRepository.findOne({
+      where: { email: loginUserDto.email },
+      select: ['id', 'userName', 'email', 'bio', 'image', 'password'],
+    });
+
+    if (!user) {
+      throw new HttpException(
+        'Credentials are not valid',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
+    const isPasswordCorrect = await compare(
+      loginUserDto.password,
+      user.password,
+    );
+
+    if (!isPasswordCorrect) {
+      throw new HttpException(
+        'Credentials are not valid',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
+    delete user.password;
+
+    return user;
+  }
+
+  findById(id: number): Promise<UserEntity> {
+    return this.userRepository.findOne({ where: { id } });
   }
 
   generateJwt(user: UserEntity): string {
